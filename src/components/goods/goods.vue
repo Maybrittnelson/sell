@@ -1,4 +1,5 @@
 <template>
+ <div>
   <div class="goods">
     <div class="menu-wrapper" ref="menuWrapper">
       <ul>
@@ -16,7 +17,7 @@
         <li v-for="(item, index) in goods" class="food-list" ref="foodList">
           <h1 class="title">{{item.name}}</h1>
           <ul>
-            <li v-for="(food, index) in item.foods" class="food-item border-1px">
+            <li @click="selectFood(food,$event)" v-for="(food, index) in item.foods" class="food-item border-1px">
               <div class="icon">
                 <img width="57" height="57" :src="food.icon" >
               </div>
@@ -29,20 +30,27 @@
                 <div class="price">
                   <span class="now">￥{{food.price}}</span><span v-show="food.oldPrice" class="old">￥{{food.oldPrice}}</span>
                 </div>
+                <div class="cartcontrol-wrapper">
+                  <cartcontrol @add="addFood" :food="food"></cartcontrol>
+                </div>
               </div>
             </li>
           </ul>
         </li>
       </ul>
     </div>
-    <shopcart :deliveryPrice="seller.deliveryPrice" 
+    <shopcart ref="shopcart"  :deliveryPrice="seller.deliveryPrice" :select-foods="selectFoods"
         :minPrice="seller.minPrice"></shopcart>
   </div>
+    <food @add="addFood" :food="selectedFood" ref="food"></food>
+ </div>
 </template>
 
 <script type="text/ecmascript-6">
   import BScroll from 'better-scroll';
   import shopcart from 'components/shopcart/shopcart';
+  import cartcontrol from 'components/cartcontrol/cartcontrol';
+  import food from 'components/food/food';
   
   const ERR_OK = 0;
 
@@ -106,6 +114,22 @@
         let el = foodList[index];
         this.foodsScroll.scrollToElement(el, 300);
       },
+      selectFood(food, event) {
+        if (!event._constructed) {
+          return;
+        }
+        this.selectedFood = food;
+        this.$refs.food.show();
+      },
+      addFood(target) {
+        this._drop(target);
+      },
+      _drop(target) {
+        // 体验优化,异步执行下落动画
+        this.$nextTick(() => {
+          this.$refs.shopcart.drop(target);
+        });
+      },
       _initScroll() {
         this.meunScroll = new BScroll(this.$refs.menuWrapper, {
           click: true
@@ -134,7 +158,9 @@
       }
     },
     components: {
-      shopcart
+      shopcart,
+      cartcontrol,
+      food
     }
   };
 </script>
@@ -240,4 +266,8 @@
               text-decoration: line-through
               font-size: 10px
               color: rgb(147, 153, 159)
+          .cartcontrol-wrapper
+            position: absolute
+            right: 0
+            bottom: 12px
 </style>
