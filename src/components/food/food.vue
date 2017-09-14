@@ -40,12 +40,14 @@
                             :ratings="food.ratings"></ratingselect> 
             <div class="rating-wrapper">
                 <ul v-show="food.ratings && food.ratings.length">
-                    <li v-for="rating in food.ratings" class="rating-item">
+                    <li v-show="needShow(rating.rateType,rating.text)" 
+                        v-for="rating in food.ratings" class="rating-item border-1px">
                         <div class="user">
                             <span class="name">{{rating.username}}</span>
-                            <img class="avatar" width="12" height="12" :src="rating.avatar" >
+                            <img class="avatar" width="12" height="12" 
+                                :src="rating.avatar" >
                         </div>
-                        <div class="time">{{rating.rateTime}}</div>
+                        <div class="time">{{rating.rateTime | dateFormat}}</div>
                         <p class="text">
                             <span :class="{'icon-thumb_up':rating.rateType===0, 
                                            'icon-thumb_down':rating.rateType===1}"></span>
@@ -53,8 +55,7 @@
                         </p>
                     </li>
                 </ul>
-                <div class="no-rating"
-                    v-show="!food.ratings || !food.ratings.length"></div>
+                <div class="no-rating" v-show="!food.ratings || !food.ratings.length">暂无评价</div>
             </div>
           </div>
       </div>
@@ -65,12 +66,11 @@
 <script type="text/ecmascript-6">
   import BScroll from 'better-scroll';
   import Vue from 'vue';
+  import {dateFormat} from 'common/js/date';
   import cartcontrol from 'components/cartcontrol/cartcontrol';
   import ratingselect from 'components/ratingselect/ratingselect';
   import split from 'components/split/split';
 
-    // const POSITIVE = 0;
-    // const NEGATIVE = 1;
     const ALL = 2;
     export default {
         props: {
@@ -93,7 +93,7 @@
         methods: {
             show() {
                 this.showFlag = true;
-                this.selectType = 1;
+                this.selectType = ALL;
                 this.onlyContent = false;
                 this.$nextTick(() => {
                 if (!this.scroll) {
@@ -129,6 +129,22 @@
                 }
                 this.$emit('add', event.target);
                 Vue.set(this.food, 'count', 1);
+            },
+            needShow(type, text) {
+                /** only show content or all true with other selected should show with selectType */
+                if (this.onlyContent && !text) {
+                    return false;
+                }
+                if (this.selectType === ALL) {
+                    return true;
+                } else {
+                    return type === this.selectType;
+                }
+            }
+        },
+        filters: {
+            dateFormat(time) {
+                return dateFormat(new Date(time), 'yyyy-MM-dd hh:mm');
             }
         },
         components: {
@@ -140,6 +156,8 @@
 </script>
 
 <style lang="stylus" rel="stylesheet/stylus">
+  @import "../../common/stylus/mixin";
+
     .food
         position: fixed
         left: 0
@@ -247,5 +265,44 @@
                 margin-left: 18px
                 font-size: 14px
                 color: rgb(7, 17, 27)            
-                
+        .rating-wrapper
+            padding: 0 18px
+            .rating-item
+                position: relative
+                padding: 16px 0
+                border-1px(rgba(7, 17, 27, 0.1))
+                .user
+                    position: absolute
+                    right: 0
+                    top: 16px
+                    line-height: 12px
+                    font-size: 0
+                    .name
+                        display: inline-block
+                        vertical-align: top
+                        margin-right: 6px
+                        font-size: 10px
+                        color: rgb(147, 153, 159)
+                    .avatar
+                        border-radius: 50%
+                .time
+                    line-height: 12px
+                    margin-bottom: 6px
+                    font-size: 10px
+                    color: rgb(147, 153, 159)
+                .text
+                    line-height: 16px
+                    font-size: 12px
+                    color: rgb(7, 17, 27)
+                    .icon-thumb_up, .icon-thumb_down
+                        margin-right: 4px
+                        line-height: 16px
+                    .icon-thumb_up
+                        color: rgb(0, 160, 220)
+                    .icon-thumb_down
+                        color: rgb(147, 153, 159)
+            .no-rating
+                padding: 16px 0
+                font-size: 12px
+                color: rgb(147, 153, 159)
 </style>
